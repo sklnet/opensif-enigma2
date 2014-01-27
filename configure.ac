@@ -137,6 +137,15 @@ AC_SUBST(DISTRO)
 AC_DEFINE_UNQUOTED(DISTRO,"$DISTRO",[distro name])
 
 
+AC_ARG_ENABLE([sh],
+	[AS_HELP_STRING(--enable-sh,    enable sh patches)],
+	[case "${enableval}" in
+		yes) enable_sh=true ;;
+		no) enable_sh=false ;;
+		*) AC_MSG_ERROR([bad value ${enableval} for --enable-sh]) ;;
+	esac])
+AM_CONDITIONAL([ENABLE_SH], [test x$enable_sh = xtrue])
+
 AC_ARG_WITH(textlcd,
 	AC_HELP_STRING([--with-textlcd], [use ascii based lcd, yes or no]),
 	[[withtextlcd=$withval]],

@@ -31,6 +31,22 @@ def getKernelVersionString():
 	except:
 		return _("unknown")
 
+def getCPUString():
+	try:
+		system="unknown"
+		file = open('/proc/cpuinfo', 'r')
+		lines = file.readlines()
+		for x in lines:
+			splitted = x.split(': ')
+			if len(splitted) > 1:
+				splitted[1] = splitted[1].replace('\n','')
+				if splitted[0].startswith("system type"):
+					system = splitted[1].split(' ')[0]
+		file.close()
+		return system 
+	except IOError:
+		return "unavailable"
+
 def getHardwareTypeString():
 	try:
 		if os.path.isfile("/proc/stb/info/boxtype"):
