@@ -68,7 +68,7 @@ class VideoHardware:
 		modes["DVI"] = ["720p", "1080p", "1080i", "576p", "480p", "576i", "480i"]
 		modes["DVI-PC"] = ["PC"]
 
-	else:
+	else if about.getCPUString().startswith('STx'):
 
 		rates["PAL"] =			{ "50Hz":	{ 50: "pal" } }
  
@@ -176,15 +176,13 @@ class VideoHardware:
 		config.av.wss.notifiers = [ ]
 		AVSwitch.getOutputAspect = self.getOutputAspect
 
-#+++>
-		if not about.getCPUString().startswith('BCM'):
+		if about.getCPUString().startswith('STx'):
 			config.av.colorformat_hdmi = ConfigSelection(choices = {"hdmi_rgb": _("RGB"), "hdmi_yuv": _("YUV"), "hdmi_422": _("422")}, default="hdmi_rgb")
 			config.av.colorformat_yuv = ConfigSelection(choices = {"yuv": _("YUV")}, default="yuv")
 			config.av.hdmi_audio_source = ConfigSelection(choices = {"pcm": _("PCM"), "spdif": _("SPDIF")}, default="pcm")
 			config.av.colorformat_hdmi.addNotifier(self.setHDMIColor)
 			config.av.colorformat_yuv.addNotifier(self.setYUVColor)
 			config.av.hdmi_audio_source.addNotifier(self.setHDMIAudioSource)
-#+++<
 		config.av.aspect.addNotifier(self.updateAspect)
 		config.av.wss.addNotifier(self.updateAspect)
 		config.av.policy_169.addNotifier(self.updateAspect)
@@ -412,29 +410,31 @@ class VideoHardware:
 		except IOError:
 			pass
 
-#+++>
 	def setHDMIColor(self, configElement):
-		map = {"hdmi_rgb": 0, "hdmi_yuv": 1, "hdmi_422": 2}
-		open("/proc/stb/avs/0/colorformat", "w").write(configElement.value)
+		if about.getCPUString().startswith('STx'):
+			map = {"hdmi_rgb": 0, "hdmi_yuv": 1, "hdmi_422": 2}
+			open("/proc/stb/avs/0/colorformat", "w").write(configElement.value)
 
 	def setYUVColor(self, configElement):
-		map = {"yuv": 0}
-		open("/proc/stb/avs/0/colorformat", "w").write(configElement.value)
+		if about.getCPUString().startswith('STx'):
+			map = {"yuv": 0}
+			open("/proc/stb/avs/0/colorformat", "w").write(configElement.value)
 
 	def setHDMIAudioSource(self, configElement):
-		open("/proc/stb/hdmi/audio_source", "w").write(configElement.value)
+		if about.getCPUString().startswith('STx'):
+			open("/proc/stb/hdmi/audio_source", "w").write(configElement.value)
 
 	def updateColor(self, port):
-		print "updateColor: ", port
-		if port == "DVI":
-			self.setHDMIColor(config.av.colorformat_hdmi)
-		elif port == "YPbPr":
-			self.setYUVColor(config.av.colorformat_yuv)
-		elif port == "Scart":
-			map = {"cvbs": 0, "rgb": 1, "svideo": 2, "yuv": 3}
-			from enigma import eAVSwitch
-			eAVSwitch.getInstance().setColorFormat(map[config.av.colorformat.value])
-#+++<
+		if about.getCPUString().startswith('STx'):
+			print "updateColor: ", port
+			if port == "DVI":
+				self.setHDMIColor(config.av.colorformat_hdmi)
+			elif port == "YPbPr":
+				self.setYUVColor(config.av.colorformat_yuv)
+			elif port == "Scart":
+				map = {"cvbs": 0, "rgb": 1, "svideo": 2, "yuv": 3}
+				from enigma import eAVSwitch
+				eAVSwitch.getInstance().setColorFormat(map[config.av.colorformat.value])
 
 config.av.edid_override = ConfigYesNo(default = False)
 video_hw = VideoHardware()

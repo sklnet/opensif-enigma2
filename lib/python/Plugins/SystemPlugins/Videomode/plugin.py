@@ -5,6 +5,7 @@ from Components.ConfigList import ConfigListScreen
 from Components.config import getConfigListEntry, config, ConfigBoolean, ConfigNothing, ConfigSlider
 from Components.Label import Label
 from Components.Sources.StaticText import StaticText
+from Components.About import about
 
 from VideoHardware import video_hw
 
@@ -90,14 +91,12 @@ class VideoSetup(Screen, ConfigListScreen):
 
 #		if config.av.videoport.value == "DVI":
 #			self.list.append(getConfigListEntry(_("Allow Unsupported Modes"), config.av.edid_override))
-#+++>
-		if config.av.videoport.value == "YPbPr":
-			self.list.append(getConfigListEntry(_("Color Format"), config.av.colorformat_yuv))
-
-		if config.av.videoport.value == "DVI":
-			self.list.append(getConfigListEntry(_("Color Format"), config.av.colorformat_hdmi))
-			self.list.append(getConfigListEntry(_("Audio Source"), config.av.hdmi_audio_source))
-#+++<
+		if about.getCPUString().startswith('STx'):
+			if config.av.videoport.value == "YPbPr":
+				self.list.append(getConfigListEntry(_("Color Format"), config.av.colorformat_yuv))
+			if config.av.videoport.value == "DVI":
+				self.list.append(getConfigListEntry(_("Color Format"), config.av.colorformat_hdmi))
+				self.list.append(getConfigListEntry(_("Audio Source"), config.av.hdmi_audio_source))
 		if config.av.videoport.value == "Scart":
 			self.list.append(getConfigListEntry(_("Color format"), config.av.colorformat, _("Configure which color format should be used on the SCART output.")))
 			if level >= 1:
