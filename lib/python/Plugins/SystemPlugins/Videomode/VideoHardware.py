@@ -1,5 +1,6 @@
 from enigma import eTimer
 from Components.config import config, ConfigSelection, ConfigSubDict, ConfigYesNo
+from Components.About import about
 
 from Tools.CList import CList
 from Tools.HardwareInfo import HardwareInfo
@@ -76,18 +77,21 @@ class VideoHardware:
 		rates["576p"] =			{ "50Hz":	{ 50: "576p50" } }
  
 		rates["720p"] =			{ "50Hz":	{ 50: "720p50" },
-								"60Hz":	{ 60: "720p60" } }
- 
+								"60Hz":	{ 60: "720p60" },
+								"multi": 	{ 50: "720p50", 60: "720p60" } }
+
 	 	rates["1080i"] =		{ "50Hz":	{ 50: "1080i50" },
-								"60Hz":	{ 60: "1080i60" } }
- 
+								"60Hz":	{ 60: "1080i60" },
+								"multi":	{ 50: "1080i50", 60: "1080i60" } }
+
 		rates["1080p"] =		{ "23Hz":	{ 50: "1080p23" },
 								"24Hz":	{ 60: "1080p24" },
 								"25Hz":	{ 60: "1080p25" },
 								"29Hz":	{ 60: "1080p29" },
 								"30Hz":	{ 60: "1080p30" },
 								"50Hz":	{ 60: "1080p50" },
-								"60Hz":	{ 60: "1080p60" } }
+								"60Hz":	{ 60: "1080p60" },
+								"multi":	{ 50: "1080p50", 60: "1080p60" } }
 
 	 	rates["PC"] = {
 			"1024x768"  : { 60: "1024x768_60", 70: "1024x768_70", 75: "1024x768_75", 90: "1024x768_90", 100: "1024x768_100" }, #43 60 70 72 75 90 100
@@ -153,10 +157,17 @@ class VideoHardware:
 				if "1080p50" in self.modes_available:
 					has1080p50 = True
 
-		if has1080p50:
-			self.widescreen_modes = set(["720p", "1080i", "1080p"])
-		else:
-			self.widescreen_modes = set(["720p", "1080i"])
+		if about.getCPUString().startswith('BCM'):
+			if has1080p50:
+				self.widescreen_modes = set(["720p", "1080i", "1080p"])
+			else:
+				self.widescreen_modes = set(["720p", "1080i"])
+		else
+		if about.getCPUString().startswith('BCM'):
+			if has1080p50:
+				self.widescreen_modes = set(["576i", "576p", "720p", "1080i", "1080p"])
+			else:
+				self.widescreen_modes = set(["576i", "576p", "720p", "1080i"])
 
 		# take over old AVSwitch component :)
 		from Components.AVSwitch import AVSwitch
@@ -165,6 +176,15 @@ class VideoHardware:
 		config.av.wss.notifiers = [ ]
 		AVSwitch.getOutputAspect = self.getOutputAspect
 
+#+++>
+		if not about.getCPUString().startswith('BCM'):
+			config.av.colorformat_hdmi = ConfigSelection(choices = {"hdmi_rgb": _("RGB"), "hdmi_yuv": _("YUV"), "hdmi_422": _("422")}, default="hdmi_rgb")
+			config.av.colorformat_yuv = ConfigSelection(choices = {"yuv": _("YUV")}, default="yuv")
+			config.av.hdmi_audio_source = ConfigSelection(choices = {"pcm": _("PCM"), "spdif": _("SPDIF")}, default="pcm")
+			config.av.colorformat_hdmi.addNotifier(self.setHDMIColor)
+			config.av.colorformat_yuv.addNotifier(self.setYUVColor)
+			config.av.hdmi_audio_source.addNotifier(self.setHDMIAudioSource)
+#+++<
 		config.av.aspect.addNotifier(self.updateAspect)
 		config.av.wss.addNotifier(self.updateAspect)
 		config.av.policy_169.addNotifier(self.updateAspect)
@@ -232,7 +252,15 @@ class VideoHardware:
 		except IOError:
 			print "writing initial videomode to /etc/videomode failed."
 
+		if not about.getCPUString().startswith('BCM'):
+			#call setResolution() with -1,-1 to read the new scrren dimesions without changing the framebuffer resolution
+			from enigma import gMainDC
+			gMainDC.getInstance().setResolution(-1, -1)
+
 		self.updateAspect(None)
+
+		if not about.getCPUString().startswith('BCM'):
+			self.updateColor(port)
 
 	def saveMode(self, port, mode, rate):
 		print "saveMode", port, mode, rate
@@ -383,6 +411,30 @@ class VideoHardware:
 			open("/proc/stb/video/policy2", "w").write(policy2)
 		except IOError:
 			pass
+
+#+++>
+	def setHDMIColor(self, configElement):
+		map = {"hdmi_rgb": 0, "hdmi_yuv": 1, "hdmi_422": 2}
+		open("/proc/stb/avs/0/colorformat", "w").write(configElement.value)
+
+	def setYUVColor(self, configElement):
+		map = {"yuv": 0}
+		open("/proc/stb/avs/0/colorformat", "w").write(configElement.value)
+
+	def setHDMIAudioSource(self, configElement):
+		open("/proc/stb/hdmi/audio_source", "w").write(configElement.value)
+
+	def updateColor(self, port):
+		print "updateColor: ", port
+		if port == "HDMI":
+			self.setHDMIColor(config.av.colorformat_hdmi)
+		elif port == "Component":
+			self.setYUVColor(config.av.colorformat_yuv)
+		elif port == "Scart":
+			map = {"cvbs": 0, "rgb": 1, "svideo": 2, "yuv": 3}
+			from enigma import eAVSwitch
+			eAVSwitch.getInstance().setColorFormat(map[config.av.colorformat.value])
+#+++<
 
 config.av.edid_override = ConfigYesNo(default = False)
 video_hw = VideoHardware()
