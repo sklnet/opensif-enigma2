@@ -426,9 +426,9 @@ class VideoHardware:
 
 	def updateColor(self, port):
 		print "updateColor: ", port
-		if port == "HDMI":
+		if port == "DVI":
 			self.setHDMIColor(config.av.colorformat_hdmi)
-		elif port == "Component":
+		elif port == "YPbPr":
 			self.setYUVColor(config.av.colorformat_yuv)
 		elif port == "Scart":
 			map = {"cvbs": 0, "rgb": 1, "svideo": 2, "yuv": 3}
