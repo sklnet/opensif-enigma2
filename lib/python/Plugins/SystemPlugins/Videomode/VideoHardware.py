@@ -68,7 +68,7 @@ class VideoHardware:
 		modes["DVI"] = ["720p", "1080p", "1080i", "576p", "480p", "576i", "480i"]
 		modes["DVI-PC"] = ["PC"]
 
-	else if about.getCPUString().startswith('STx'):
+	elif about.getCPUString().startswith('STx'):
 
 		rates["PAL"] =			{ "50Hz":	{ 50: "pal" } }
  
@@ -162,8 +162,7 @@ class VideoHardware:
 				self.widescreen_modes = set(["720p", "1080i", "1080p"])
 			else:
 				self.widescreen_modes = set(["720p", "1080i"])
-		else
-		if about.getCPUString().startswith('BCM'):
+		elif about.getCPUString().startswith('STx'):
 			if has1080p50:
 				self.widescreen_modes = set(["576i", "576p", "720p", "1080i", "1080p"])
 			else:
