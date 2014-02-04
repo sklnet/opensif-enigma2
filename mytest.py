@@ -622,6 +622,12 @@ import Components.RcModel
 #t.callback.append(dump_malloc_stats)
 #t.start(1000)
 
+from Components.About import about
+if about.getCPUString().startswith('STx'):
+	import os
+	print "[DEBUG] Kill eventually running showiframe istances"
+	os.system('killall -9 showiframe')
+
 # first, setup a screen
 try:
 	runScreenTest()
